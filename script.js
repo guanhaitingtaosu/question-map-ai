@@ -237,6 +237,41 @@
     }
 
     // ===== Data Persistence =====
+    // 配置：Formspree 表单（用于数据收集）
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mwpkgggp'; // 临时占位，需要替换
+
+    async function saveToFormspree(data) {
+        try {
+            const formData = {
+                user_problem: data.problem,
+                answer_q1: data.answers.q1,
+                answer_q2: data.answers.q2,
+                answer_q3: data.answers.q3,
+                result_type: data.resultType,
+                result_name: data.resultName,
+                timestamp: data.timestamp,
+                _subject: `新问题地图测试：${data.resultName}`
+            };
+
+            const response = await fetch(FORMSPREE_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            if (response.ok) {
+                console.log('✅ 数据已提交');
+            } else {
+                console.warn('⚠️ 提交失败:', response.status);
+            }
+        } catch (error) {
+            console.warn('⚠️ 数据提交出错:', error);
+        }
+    }
+
     function saveToDatabase() {
         const record = {
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -249,14 +284,17 @@
             resultName: state.result.name,
         };
 
+        // 保存到本地（备用）
         try {
             const existing = JSON.parse(localStorage.getItem('problemMapData') || '[]');
             existing.push(record);
             localStorage.setItem('problemMapData', JSON.stringify(existing));
         } catch (e) {
-            // Silent fail for localStorage
-            console.warn('Could not save data:', e);
+            console.warn('Could not save to localStorage:', e);
         }
+
+        // 提交到 Formspree（主要数据收集）
+        saveToFormspree(record);
     }
 
     // ===== Utilities =====
